@@ -2,9 +2,10 @@
   "name": "impermanent-web",
   "version": "1.0.0",
   "description": "test",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "parcel ./src/index.html",
+    "build": "parcel build ./index.html --public-url ./ --dist-dir docs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -16,5 +17,9 @@
   "bugs": {
     "url": "https://github.com/impermanent-mx/impermanent-mx/issues"
   },
-  "homepage": "https://github.com/impermanent-mx/impermanent-mx#readme"
+  "homepage": "https://github.com/impermanent-mx/impermanent-mx#readme",
+  "dependencies": {
+    "parcel": "^2.9.3",
+    "three": "^0.155.0"
+  }
 }

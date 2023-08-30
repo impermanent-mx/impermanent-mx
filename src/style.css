@@ -1,0 +1,34 @@
+body {
+    margin: 0;
+    background-color: black;
+    overflow-y: hidden;
+    font-family: Source Code Pro;
+    font-size: 18px; 
+    color: #f7f8f9;
+    line-height: 10px;
+}
+
+
+#info {
+    position: absolute; 
+    top: 45%;
+    width: 100vw;
+    vertical-align: center; 
+    padding: 0px;
+    text-align: center; 
+    box-sizing: border-box;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    z-index: 1; /* TODO Solve this in HTML */
+}
+
+
+#container {
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    bottom: 0px;
+}
+
