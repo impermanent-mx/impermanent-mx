@@ -57,7 +57,7 @@ function init(){
     }
 
 
-    /// boton para 
+    /// boton para cambiar de sketch 
     
 //    osc(2, ()=>cursorX*0.001, 1 ).color(1.75, 0.5, 1.97).rotate(1, 0.1, 0.5).modulateScrollX(o0, 1.001).out(o0);
 
