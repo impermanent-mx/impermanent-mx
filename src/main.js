@@ -5,8 +5,8 @@ import Hydra from 'hydra-synth'
 let pX = [], pY = [], pZ = [];
 let cursorX, cursorY; 
 
-	let windowHalfX = window.innerWidth / 2;
-			let windowHalfY = window.innerHeight / 2;
+let windowHalfX = window.innerWidth / 2;
+let windowHalfY = window.innerHeight / 2;
 const meshes = [],materials = [],xgrid = 4, ygrid = 4;
 let material, mesh;
 const hydra = new Hydra({
@@ -30,7 +30,7 @@ function init(){
 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / (window.innerHeight), 0.1, 1000 );
-    camera.position.z = 7; 
+    camera.position.z = 12; 
 
     const light = new THREE.PointLight(  0xffffff, 30 );
     light.position.set( 2, 0, 4 );
@@ -113,9 +113,10 @@ function init(){
     
     window.addEventListener( 'resize', onWindowResize);
 
-    controls = new OrbitControls( camera, renderer2.domElement );
-    controls.maxDistance = 300;
-    controls.maxAzimuthAngle = Math.PI * 2; 
+    //controls = new OrbitControls( camera, renderer2.domElement );
+    //controls.maxDistance = 300;
+    //controls.maxAzimuthAngle = Math.PI * 2; 
+
     container.appendChild( renderer2.domElement );
     animate(); 
 
