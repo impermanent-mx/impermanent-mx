@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from '../jsm/controls/OrbitControls.js';
 import Hydra from 'hydra-synth'
+import { FontLoader } from '../static/jsm/loaders/FontLoader.js';
 
 let pX = [], pY = [], pZ = [];
 let cursorX, cursorY; 
@@ -17,17 +18,46 @@ const hydra = new Hydra({
     
 let elCanvas = document.getElementById("myCanvas");
 vit = new THREE.CanvasTexture(elCanvas);
+elCanvas.style.display = 'none';     
 
 let scene, camera, renderer2, planes = []; 
 let mouseX=0, mouseY=0; 
 let controls; 
-let cubos = []; 
+let cubos = [];
+
+///////////////////////////////////////////////////
+// render target
+
+const rtWidth = 1920*2;
+const rtHeight = 1080*2;
+const renderTarget = new THREE.WebGLRenderTarget(rtWidth, rtHeight, { format: THREE.RGBAFormat } );
+const rtFov = 75;
+const rtAspect = rtWidth / rtHeight;
+const rtNear = 0.1;
+const rtFar = 5;
+const rtCamera = new THREE.PerspectiveCamera(rtFov, rtAspect, rtNear, rtFar);
+rtCamera.position.z = 4;
+const rtScene = new THREE.Scene();
+//rtScene.background = 0x000000; 
+//rtScene.background = new THREE.Color( 0x000000 );
+rtScene.background = vit; 
+let fuente;
+let text = new THREE.Mesh();
+
+const materialrt = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    map: renderTarget.texture,
+    transparent: true,
+    //roughness: 0.4,
+    //metalness: 0.2
+});
 
 init()
 document.addEventListener( 'mousemove', onDocumentMouseMove );
 
 function init(){
 
+    loadFont(); 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / (window.innerHeight), 0.1, 1000 );
     camera.position.z = 12; 
@@ -56,17 +86,14 @@ function init(){
 	cursorY = e.pageY;
     }
 
-
     /// boton para 
     
 //    osc(2, ()=>cursorX*0.001, 1 ).color(1.75, 0.5, 1.97).rotate(1, 0.1, 0.5).modulateScrollX(o0, 1.001).out(o0);
-
  
     osc(6, 0, 0.8)  .color(1, 0.1,.90)
 	.rotate(0.92, 0.3)  .mult(osc(4, 0.03).thresh(0.4).rotate(0, -0.02))
 	.modulateRotate(osc(20, 0).thresh(0.3, 0.6), [1,2,3,4].smooth())  .out(o0)
   
-
   /*
     osc(4, 0.1, 0.8)  .color(1.04, .9, -1.1)
 	.rotate(0.30, 0.1)  .modulate(noise(()=>mouse.Y), () => 0.5 * Math.sin(0.08 * time))
@@ -77,16 +104,14 @@ function init(){
     renderer2.setSize( window.innerWidth, window.innerHeight );
     let container = document.getElementById('container');
     
-    
-
     for(let i = 0; i < xgrid; i++){
 	for (let j = 0; j < ygrid; j++){
 	    
 	    // geometry = new THREE.SphereGeometry(4, 3, 4 );
-	    const geometry = new THREE.BoxGeometry(2, 2, 0.2); 
+	    const geometry = new THREE.BoxGeometry(2, 2, 0.5); 
 	    change_uvs( geometry, ux, uy, i, j );
 
-	    materials[ cubeCount] = new THREE.MeshPhongMaterial( { color: 0xffffff, map: vit, shininess: 0.9} );
+	    materials[ cubeCount] = new THREE.MeshPhongMaterial( { color: 0xffffff, map: renderTarget.texture, shininess: 0.9} );
 	    // materials[ cubeCount ] = new THREE.MeshLambertMaterial( parameters );
 	    material2 = materials[ cubeCount ];
 	    
@@ -99,7 +124,8 @@ function init(){
 	    
 	    cubos[cubeCount].scale.x = 1 + (Math.random() * 2);
 	    cubos[cubeCount].scale.y = 1 + (Math.random() * 2);
-	    cubos[cubeCount].lookAt(0, 0, 10); 
+	    cubos[cubeCount].lookAt(0, 0, 10);
+	   
 	    //cubos[cubeCount].position.x = i + ux ; 
 	    // cubos[cubeCount].position.y =1;
 	    //cubos[cubeCount].position.z = pZ[cubeCount] *  1;
@@ -124,20 +150,34 @@ function init(){
 
 function animate() {
     requestAnimationFrame( animate );
+    var time2 = Date.now() * 0.00001;
+    
+    text.position.x = Math.sin(time2*20) * 10; 
+    text.position.y = Math.cos(time2*25) * 1 -2 ; 
 
     vit.needsUpdate = true;
 
-    		camera.position.x += ( mouseX - camera.position.x ) * .05;
-				camera.position.y += ( - mouseY - camera.position.y ) * .05;
+    camera.position.x += ( mouseX - camera.position.x ) * .05;
+    camera.position.y += ( - mouseY - camera.position.y ) * .05;
 
-				camera.lookAt( scene.position );
+    camera.lookAt( scene.position );
 
     //camera.position.x = Math.sin( .5 * Math.PI * ( mouse[ 0 ] - .5 ) )*-4 ;
     //camera.position.y = Math.sin( .25 * Math.PI * ( mouse[ 1 ] - .5 ) ) *4;
     //camera.position.z = Math.cos( .5 * Math.PI * ( mouse[ 0 ] - .5 ) )*2;
     
     //cube.rotation.x += 0.01;
-    //cube.rotation.y -= 0.02; 
+    //cube.rotation.y -= 0.02;
+
+    
+    renderTarget.flipY = true;
+    renderTarget.needsUpdate = true;
+    renderer2.setRenderTarget(renderTarget);
+    
+    renderer2.setClearColor(0x000000, 0);
+    renderer2.render(rtScene, rtCamera);
+    renderer2.setRenderTarget(null);
+
 
     renderer2.render( scene, camera );
 
@@ -169,5 +209,48 @@ function change_uvs( geometry, unitx, unity, offsetx, offsety ) {
 	uvs[ i ] = ( uvs[ i ] + offsetx ) * unitx;
 	uvs[ i + 1 ] = ( uvs[ i + 1 ] + offsety ) * unity;	
     }
+    
+}
+
+function loadFont(){
+    const loader = new FontLoader();
+    const font = loader.load(
+	// resource URL
+	'fonts/Dela_Gothic_One_Regular.json',
+	
+	// onLoad callback
+	function ( font ) {
+	    fuente = font;
+	    console.log(font);
+	    fBool = true; 
+	    texto(); 
+	})
+}
+
+function texto( mensaje= "IMPERMANENT" ){
+    //const materialT = new THREE.MeshStandardMaterial({color: 0xffffff, metalnenss: 0.8, roughness: 0.2, flatShading: true});
+
+    const materialT = new THREE.MeshBasicMaterial({color: 0xffffff});
+    text.material = materialT; 
+    const shapes = fuente.generateShapes( mensaje, 2 );
+    const geometry = new THREE.ShapeGeometry( shapes );
+    // textGeoClon = geometry.clone(); // para modificar
+    text.geometry.dispose(); 
+    text.geometry= geometry;
+    geometry.computeBoundingBox();
+    geometry.computeVertexNormals(); 
+    const xMid = - 0.5 * ( geometry.boundingBox.max.x - geometry.boundingBox.min.x );
+    const yMid = 0.5 * ( geometry.boundingBox.max.y - geometry.boundingBox.min.y );
+    geometry.translate( xMid, yMid, 0 );
+    //geometry.rotation.x = Math.PI*2;
+    text.geometry= geometry;
+    text.rotation = Math.PI * time; 
+    rtScene.add(text);
+    text.rotation.y = Math.PI * 2
+    //text.rotation.z = Math.PI *2
+    
+    //text.position.y = 0;
+    //text.position.x = -4; 
+    //let lineasSelectas = [];
     
 }
