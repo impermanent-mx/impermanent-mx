@@ -2,7 +2,23 @@ import * as THREE from 'three';
 import { OrbitControls } from '../jsm/controls/OrbitControls.js';
 import Hydra from 'hydra-synth'
 import { FontLoader } from '../static/jsm/loaders/FontLoader.js';
+import * as Tone from 'tone'; 
 
+const gainNode = new Tone.Gain(0.25).toDestination();
+
+const synth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: {
+	partials: [0, 2, 3, 4],
+    }
+}).connect(gainNode);
+
+//////////////////////////////////////////////////
+// INTERSECTED
+
+let raycaster;
+let INTERSECTED; 
+const pointer = new THREE.Vector2();
+ 
 let pX = [], pY = [], pZ = [];
 let cursorX, cursorY; 
 
@@ -57,10 +73,11 @@ document.addEventListener( 'mousemove', onDocumentMouseMove );
 
 function init(){
 
+    raycaster = new THREE.Raycaster();
     loadFont(); 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / (window.innerHeight), 0.1, 1000 );
-    camera.position.z = 12; 
+    camera.position.z = 18; 
 
     const light = new THREE.PointLight(  0xffffff, 30 );
     light.position.set( 2, 0, 4 );
@@ -120,7 +137,6 @@ function init(){
 	    cubos[cubeCount].position.x = ( i - xgrid / 2.75 ) * 3;
 	    cubos[cubeCount].position.y = ( j - ygrid / 2.75 ) * 3;
 	    cubos[cubeCount].position.z = (Math.random() * 4)-2;
-
 	    
 	    cubos[cubeCount].scale.x = 1 + (Math.random() * 2);
 	    cubos[cubeCount].scale.y = 1 + (Math.random() * 2);
@@ -142,7 +158,8 @@ function init(){
     //controls = new OrbitControls( camera, renderer2.domElement );
     //controls.maxDistance = 300;
     //controls.maxAzimuthAngle = Math.PI * 2; 
-
+    document.addEventListener( 'mousemove', onPointerMove );
+    
     container.appendChild( renderer2.domElement );
     animate(); 
 
@@ -150,6 +167,46 @@ function init(){
 
 function animate() {
     requestAnimationFrame( animate );
+
+
+    // raycaster
+
+    camera.updateMatrixWorld();
+
+    raycaster.setFromCamera( pointer, camera );
+    const intersects = raycaster.intersectObjects( scene.children, true );
+ 
+    if ( intersects.length > 0 ) {
+	if ( INTERSECTED != intersects[ 0 ].object) { // si INTERSECTED es tal objeto entonces realiza tal cosa
+
+	    //console.log(INTERSECTED); 
+
+	    if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+	    
+	    INTERSECTED = intersects[ 0 ].object;
+	    INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+	    INTERSECTED.material.emissive.setHex( 0xffffff );
+	    document.getElementById("container").style.cursor = "pointer";
+
+	    const notes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C3", "D3", "E3", "F3", "G3", "A3", "B3"];
+
+	    const nrand = Math.floor(Math.random() * notes.length); 
+	    
+	    onclick = function(){
+		// console.log(nrand); 
+		synth.triggerAttackRelease(notes[nrand], "8n");
+	    }
+	    
+	}
+	
+    } else {
+	
+	if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+	
+	INTERSECTED = null;
+    }
+
+
     var time2 = Date.now() * 0.00001;
     
     text.position.x = Math.sin(time2*20) * 10; 
@@ -168,7 +225,6 @@ function animate() {
     
     //cube.rotation.x += 0.01;
     //cube.rotation.y -= 0.02;
-
     
     renderTarget.flipY = true;
     renderTarget.needsUpdate = true;
@@ -177,7 +233,6 @@ function animate() {
     renderer2.setClearColor(0x000000, 0);
     renderer2.render(rtScene, rtCamera);
     renderer2.setRenderTarget(null);
-
 
     renderer2.render( scene, camera );
 
@@ -252,5 +307,13 @@ function texto( mensaje= "IMPERMANENT" ){
     //text.position.y = 0;
     //text.position.x = -4; 
     //let lineasSelectas = [];
+    
+}
+
+
+function onPointerMove( event ) {
+    
+    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+    pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
     
 }
