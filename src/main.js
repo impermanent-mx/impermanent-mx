@@ -4,30 +4,87 @@ import Hydra from 'hydra-synth'
 import { FontLoader } from '../static/jsm/loaders/FontLoader.js';
 import * as Tone from 'tone'; 
 
-const gainNode = new Tone.Gain(0.2).toDestination();
+Tone.Transport.bpm.value = 100;
+
+const metalNode = new Tone.Gain(0.075).toDestination(); 
+const metal = new Tone.MetalSynth({
+}).connect(metalNode);
+
+const gainNode = new Tone.Gain(0.075).toDestination();
 
 var reverb = new Tone.Freeverb({
-    roomSize  : 0.95,
-    dampening  : 10000
+    roomSize  : 0.97,
+    dampening  : 1000
 });
 
 const synth = new Tone.PolySynth(Tone.Synth, {
     oscillator: {
-	partials: [0, 2, 3, 4, 8s],
+	partials: [0, 2, 3, 4, 8],
     }
 }).connect(reverb);
 reverb.connect(gainNode); 
 
-const gainKick = new Tone.Gain(0.75).toDestination();
+const gainKick = new Tone.Gain(0.35).toDestination();
 const kick = new Tone.MembraneSynth().connect(gainKick);
 
+var snare = new Tone.NoiseSynth(
+    {
+	
+	noise  : {
+	    type  : "brown"
+	}  ,
+	envelope  : {
+	    attack  : 0.001 ,
+	    decay  : 0.01 ,
+	    sustain  : 0.15
+	}
+    }
+).toDestination(); 
+
+// Super rutina 
+
+var kickCount = 0; 
+var snareCount = 0;
+var metalCount = 0; 
+
 const loop = new Tone.Loop((time) => {
-	// triggered every eighth note.
-	// console.log(time);
-	kick.triggerAttackRelease("C2", "4n");
+    // triggered every eighth note.
+    // console.log(time);
+    if(kickSeq[kickCount] == 1){
+	kick.triggerAttackRelease("C1", "32n");
+    }
 
-}, "2n").start(0);
+    if(snareSeq[snareCount] == 1){
+	snare.triggerAttackRelease( "8n");
+    }
 
+    if(metalSeq[metalCount] == 1){
+	metal.triggerAttackRelease('C0', '32n'); 
+    }
+    
+    kickCount++;
+    snareCount++;
+    metalCount++;
+
+    if(kickCount == kickSeq.length){
+	kickCount = 0; 
+    }
+
+    if(snareCount == snareSeq.length){
+	snareCount = 0; 
+    }
+
+    if(metalCount == metalSeq.length){
+	metalCount = 0; 
+    }
+    
+}, "16n").start(0);
+
+var kickSeq = [1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1]; 
+var snareSeq = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0];
+var metalSeq = [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0]; 
+
+// console.log(kickSeq.length); 
 
 //////////////////////////////////////////////////
 // INTERSECTED
@@ -205,13 +262,13 @@ function animate() {
 	    INTERSECTED.material.emissive.setHex( 0xffffff );
 	    document.getElementById("container").style.cursor = "pointer";
 
-	    const notes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C3", "D3", "E3", "F3", "G3", "A3", "B3"];
+	    const notes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5", "F5", "G5", "A5", "B5"];
 
 	    const nrand = Math.floor(Math.random() * notes.length); 
 	    
 	    onclick = function(){
 		// console.log(nrand); 
-		synth.triggerAttackRelease(notes[nrand], "6n");
+		synth.triggerAttackRelease(notes[nrand], "16n");
 	    }
 	    
 	}
@@ -349,7 +406,6 @@ const loop = new Tone.Loop((time) => {
 }, "8n").start(0);
 Tone.Transport.start();
 */
-
 
 const infoButton = document.getElementById('sonido');
 infoButton.addEventListener('click', sonidoFunc );
