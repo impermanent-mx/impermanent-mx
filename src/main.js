@@ -4,13 +4,30 @@ import Hydra from 'hydra-synth'
 import { FontLoader } from '../static/jsm/loaders/FontLoader.js';
 import * as Tone from 'tone'; 
 
-const gainNode = new Tone.Gain(0.25).toDestination();
+const gainNode = new Tone.Gain(0.2).toDestination();
+
+var reverb = new Tone.Freeverb({
+    roomSize  : 0.95,
+    dampening  : 10000
+});
 
 const synth = new Tone.PolySynth(Tone.Synth, {
     oscillator: {
-	partials: [0, 2, 3, 4],
+	partials: [0, 2, 3, 4, 8s],
     }
-}).connect(gainNode);
+}).connect(reverb);
+reverb.connect(gainNode); 
+
+const gainKick = new Tone.Gain(0.75).toDestination();
+const kick = new Tone.MembraneSynth().connect(gainKick);
+
+const loop = new Tone.Loop((time) => {
+	// triggered every eighth note.
+	// console.log(time);
+	kick.triggerAttackRelease("C2", "4n");
+
+}, "2n").start(0);
+
 
 //////////////////////////////////////////////////
 // INTERSECTED
@@ -194,7 +211,7 @@ function animate() {
 	    
 	    onclick = function(){
 		// console.log(nrand); 
-		synth.triggerAttackRelease(notes[nrand], "8n");
+		synth.triggerAttackRelease(notes[nrand], "6n");
 	    }
 	    
 	}
@@ -316,4 +333,27 @@ function onPointerMove( event ) {
     pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
     pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
     
+}
+
+// Idea: podría hacer secuenciadores y modificar el bpm con tweenjs
+
+// primer paso, iniciar un kick 
+
+/*
+
+const loop = new Tone.Loop((time) => {
+	// triggered every eighth note.
+	// console.log(time);
+	kick.triggerAttackRelease("C2", "8n");
+
+}, "8n").start(0);
+Tone.Transport.start();
+*/
+
+
+const infoButton = document.getElementById('sonido');
+infoButton.addEventListener('click', sonidoFunc );
+
+function sonidoFunc(){
+    Tone.Transport.start(); 
 }
