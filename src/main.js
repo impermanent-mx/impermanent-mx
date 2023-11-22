@@ -3,6 +3,29 @@ import { OrbitControls } from '../jsm/controls/OrbitControls.js';
 import Hydra from 'hydra-synth'
 import { FontLoader } from '../static/jsm/loaders/FontLoader.js';
 import * as Tone from 'tone'; 
+import * as TWEEN from 'tween'; 
+
+const params = {pointer: 0};
+let rand = Math.random(); 
+let twCount = 0; 
+
+function grainTwLoop(pntr = 0, frqScl = 1, wndwSz = 0.5, vrlps = 0.5, wndwRndRt = 0, time = 5000){
+    const tween = new TWEEN.Tween(params, false)
+	  .to({pointer: rand}, time) 
+	  .easing(TWEEN.Easing.Quadratic.InOut)
+	  .onUpdate(() => {
+	      // console.log(params.pointer)
+	  })
+	  .onComplete(() => {	      
+	      rand = Math.random()
+	      grainTwLoop()
+	      twCount++;
+	      console.log(twCount, rand); 
+	  })
+	  .start()
+}
+
+grainTwLoop(); 
 
 Tone.Transport.bpm.value = 100;
 
@@ -28,8 +51,7 @@ const gainKick = new Tone.Gain(0.35).toDestination();
 const kick = new Tone.MembraneSynth().connect(gainKick);
 
 var snare = new Tone.NoiseSynth(
-    {
-	
+    {	
 	noise  : {
 	    type  : "brown"
 	}  ,
@@ -242,7 +264,7 @@ function init(){
 function animate() {
     requestAnimationFrame( animate );
 
-
+    TWEEN.update(); 
     // raycaster
 
     camera.updateMatrixWorld();
@@ -412,4 +434,8 @@ infoButton.addEventListener('click', sonidoFunc );
 
 function sonidoFunc(){
     Tone.Transport.start(); 
+}
+
+function updateGranulator(){
+
 }
