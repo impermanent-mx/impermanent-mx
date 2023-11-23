@@ -4,30 +4,22 @@ import Hydra from 'hydra-synth'
 import { FontLoader } from '../static/jsm/loaders/FontLoader.js';
 import * as Tone from 'tone'; 
 import * as TWEEN from 'tween'; 
+const { Grain } = require('./Grain')
+const { map_range } = require('./maprange.js');
 
-const params = {pointer: 0};
+var freq = 1;
+let tamoRedy = false; 
+
+var AudioContext = window.AudioContext || window.webkitAudioContext
+const audioCtx = new AudioContext()
+
+const cosa = new Grain(audioCtx);
+ 
+const params = {pointer: 0, freqScale: 1};
 let rand = Math.random(); 
 let twCount = 0; 
 
-function grainTwLoop(pntr = 0, frqScl = 1, wndwSz = 0.5, vrlps = 0.5, wndwRndRt = 0, time = 5000){
-    const tween = new TWEEN.Tween(params, false)
-	  .to({pointer: rand}, time) 
-	  .easing(TWEEN.Easing.Quadratic.InOut)
-	  .onUpdate(() => {
-	      // console.log(params.pointer)
-	  })
-	  .onComplete(() => {	      
-	      rand = Math.random()
-	      grainTwLoop()
-	      twCount++;
-	      console.log(twCount, rand); 
-	  })
-	  .start()
-}
-
-grainTwLoop(); 
-
-Tone.Transport.bpm.value = 100;
+Tone.Transport.bpm.value = 60;
 
 const metalNode = new Tone.Gain(0.075).toDestination(); 
 const metal = new Tone.MetalSynth({
@@ -72,10 +64,10 @@ var metalCount = 0;
 const loop = new Tone.Loop((time) => {
     // triggered every eighth note.
     // console.log(time);
-    if(kickSeq[kickCount] == 1){
+    if(kickSeq[kickCount] == 1  ){
 	kick.triggerAttackRelease("C1", "32n");
     }
-
+    
     if(snareSeq[snareCount] == 1){
 	snare.triggerAttackRelease( "8n");
     }
@@ -88,6 +80,7 @@ const loop = new Tone.Loop((time) => {
     snareCount++;
     metalCount++;
 
+    /*
     if(kickCount == kickSeq.length){
 	kickCount = 0; 
     }
@@ -98,13 +91,14 @@ const loop = new Tone.Loop((time) => {
 
     if(metalCount == metalSeq.length){
 	metalCount = 0; 
-    }
+	}
+    */
     
-}, "16n").start(0);
+}, "16n").start(0); 
 
-var kickSeq = [1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1]; 
-var snareSeq = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0];
-var metalSeq = [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0]; 
+var kickSeq = [1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]; 
+var snareSeq = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0];
+var metalSeq = [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0]; 
 
 // console.log(kickSeq.length); 
 
@@ -248,6 +242,7 @@ function init(){
     }
 
 
+    // decodeAndPlay(); 
     
     window.addEventListener( 'resize', onWindowResize);
 
@@ -289,8 +284,13 @@ function animate() {
 	    const nrand = Math.floor(Math.random() * notes.length); 
 	    
 	    onclick = function(){
-		// console.log(nrand); 
-		synth.triggerAttackRelease(notes[nrand], "16n");
+		// audioCtx.resume(); 
+		// console.log(nrand);
+		grainTwLoop();
+		kickCount = 0;
+		snareCount = 0;
+		metalCount = 0;
+		// synth.triggerAttackRelease(notes[nrand], "16n");
 	    }
 	    
 	}
@@ -426,16 +426,62 @@ const loop = new Tone.Loop((time) => {
 	kick.triggerAttackRelease("C2", "8n");
 
 }, "8n").start(0);
-Tone.Transport.start();
+Tone.Transporttart();
 */
 
 const infoButton = document.getElementById('sonido');
 infoButton.addEventListener('click', sonidoFunc );
 
 function sonidoFunc(){
-    Tone.Transport.start(); 
+    decodeAndPlay();
+    console.log("hola"); 
 }
 
-function updateGranulator(){
+function decodeAndPlay(){
+    
+    const request = new XMLHttpRequest();
+    request.open('GET', 'snd/ani.mp3', true);
+    request.responseType = 'arraybuffer';
+    self.buffer = 0; 
+    request.onload = function() {
+	let audioData = request.response;
+	audioCtx.decodeAudioData(audioData, function(buffer) {
+	    // buffer = buffer2;
+	    boolCosa = true; 
+	    // const post = new Post(a.audioCtx); 
+	    // cosa = new Grain(audioCtx);
+	    // cosa2 = new Grain(a.audioCtx);
+	    //post.gain(0.5);
+	    //buffer, pointer, freqScale, windowSize, overlaps, windowratio/
+	    cosa.set(buffer, Math.random(), 1 , 2, (120/120)*2, 0);
+	    cosa.start();
+	 
+	    Tone.Transport.start();   
+	    grainTwLoop(audioCtx); 
+	},
+				   function(e){"Error with decoding audio data" + e.error});
+    }
+    request.send();
+    tamoRedy = true; 
+}
 
+function grainTwLoop(pntr = 0, frqScl = 1, wndwSz = 0.5, vrlps = 0.5, wndwRndRt = 0, time = 8000){
+    const tween = new TWEEN.Tween(params, false)
+	  .to({pointer: rand, freqScale: freq}, time) 
+	  .easing(TWEEN.Easing.Quadratic.InOut)
+	  .onUpdate(() => {
+	      //cosa.pointer = params.pointer; 
+	      cosa.pointer = map_range(params.pointer, 0, 1, 0, cosa.buffer.duration)
+	      // cosa.freqScale = params.freqScale; 
+	  })
+	  .onComplete(() => {
+	      console.log(cosa.pointer); 
+	      // console.log(aCtx);
+	      cosa.windowRandRatio = 0.05; 
+	      rand = Math.random()
+	      freq = Math.floor(Math.random() * 2) + 1; 
+	      twCount++;
+	      console.log(twCount, rand); 
+	  })
+	  .start()
 }
