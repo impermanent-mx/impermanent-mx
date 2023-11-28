@@ -3,9 +3,14 @@ import { OrbitControls } from '../jsm/controls/OrbitControls.js';
 import Hydra from 'hydra-synth'
 import { FontLoader } from '../static/jsm/loaders/FontLoader.js';
 import * as Tone from 'tone'; 
-import * as TWEEN from 'tween'; 
+import * as TWEEN from 'tween';
+
 const { Grain } = require('./Grain')
 const { map_range } = require('./maprange.js');
+const { GLoop } = require('./GrainTwLoop.js'); 
+
+let boolCosa = false;  
+let clicBool = false; 
 
 var freq = 1;
 let tamoRedy = false; 
@@ -14,12 +19,16 @@ var AudioContext = window.AudioContext || window.webkitAudioContext
 const audioCtx = new AudioContext()
 
 const cosa = new Grain(audioCtx);
- 
+
+const gloop = new GLoop();  
+
+// console.log(cosa); 
+
 const params = {pointer: 0, freqScale: 1};
 let rand = Math.random(); 
 let twCount = 0; 
 
-Tone.Transport.bpm.value = 60;
+Tone.Transport.bpm.value = 70;
 
 const metalNode = new Tone.Gain(0.075).toDestination(); 
 const metal = new Tone.MetalSynth({
@@ -250,7 +259,8 @@ function init(){
     //controls.maxDistance = 300;
     //controls.maxAzimuthAngle = Math.PI * 2; 
     document.addEventListener( 'mousemove', onPointerMove );
-    
+    document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+
     container.appendChild( renderer2.domElement );
     animate(); 
 
@@ -258,17 +268,22 @@ function init(){
 
 function animate() {
     requestAnimationFrame( animate );
-
-    TWEEN.update(); 
+    //TWEEN.update(); 
     // raycaster
 
+    if(boolCosa){
+	gloop.update();
+	cosa.pointer = map_range(gloop.paramsInit.pointer, 0, 1, 0, cosa.buffer.duration);
+	cosa.freqScale = gloop.paramsInit.freqScale; 
+    }
+    
     camera.updateMatrixWorld();
 
     raycaster.setFromCamera( pointer, camera );
-    const intersects = raycaster.intersectObjects( scene.children, true );
+    const intersects = raycaster.intersectObjects( scene.children, false );
  
     if ( intersects.length > 0 ) {
-	if ( INTERSECTED != intersects[ 0 ].object) { // si INTERSECTED es tal objeto entonces realiza tal cosa
+	if ( INTERSECTED != intersects[ 0 ].object && intersects[0].object.material.emissive != undefined ) { // si INTERSECTED es tal objeto entonces realiza tal cosa
 
 	    //console.log(INTERSECTED); 
 
@@ -276,29 +291,21 @@ function animate() {
 	    
 	    INTERSECTED = intersects[ 0 ].object;
 	    INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-	    INTERSECTED.material.emissive.setHex( 0xffffff );
+	    INTERSECTED.material.emissive.setHex( 0xb967ff );
 	    document.getElementById("container").style.cursor = "pointer";
 
 	    const notes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5", "F5", "G5", "A5", "B5"];
 
-	    const nrand = Math.floor(Math.random() * notes.length); 
-	    
-	    onclick = function(){
-		// audioCtx.resume(); 
-		// console.log(nrand);
-		grainTwLoop();
-		kickCount = 0;
-		snareCount = 0;
-		metalCount = 0;
-		// synth.triggerAttackRelease(notes[nrand], "16n");
-	    }
+	   clicBool = true; 
+	    // console.log(clicBool); 
+	   
 	    
 	}
 	
     } else {
 	
 	if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
-	
+	document.getElementById("container").style.cursor = "default";
 	INTERSECTED = null;
     }
 
@@ -378,7 +385,7 @@ function loadFont(){
 	})
 }
 
-function texto( mensaje= "IMPERMANENT" ){
+function texto( mensaje= "IMPERMANENT IMPERMANENT IMPERMANENT\nIMPERMANENT IMPERMANENT IMPERMANENT" ){
     //const materialT = new THREE.MeshStandardMaterial({color: 0xffffff, metalnenss: 0.8, roughness: 0.2, flatShading: true});
 
     const materialT = new THREE.MeshBasicMaterial({color: 0xffffff});
@@ -433,6 +440,7 @@ const infoButton = document.getElementById('sonido');
 infoButton.addEventListener('click', sonidoFunc );
 
 function sonidoFunc(){
+    Tone.start(); 
     decodeAndPlay();
     console.log("hola"); 
 }
@@ -447,26 +455,33 @@ function decodeAndPlay(){
 	let audioData = request.response;
 	audioCtx.decodeAudioData(audioData, function(buffer) {
 	    // buffer = buffer2;
-	    boolCosa = true; 
+	    console.log("holo"); 
 	    // const post = new Post(a.audioCtx); 
-	    // cosa = new Grain(audioCtx);
+	   //cosa = new Grain(audioCtx);
 	    // cosa2 = new Grain(a.audioCtx);
 	    //post.gain(0.5);
 	    //buffer, pointer, freqScale, windowSize, overlaps, windowratio/
-	    cosa.set(buffer, Math.random(), 1 , 2, (120/120)*2, 0);
+	    cosa.set(buffer, Math.random(), 4 , 2, 0.25, 0.05);
+	    // console.log(cosa.buffer); 
 	    cosa.start();
-	 
-	    Tone.Transport.start();   
-	    grainTwLoop(audioCtx); 
+
+	    Tone.Transport.start();
+	    // gloop.seqpointer = [0.1, 0.3, 0.5]; 
+	    gloop.start();
+	    boolCosa = true;
+	    
+	    // console.log(gloop.pointer); 
+	    
+	    // grainTwLoop(audioCtx); 
 	},
-				   function(e){"Error with decoding audio data" + e.error});
+				 function(e){"Error with decoding audio data" + e.error});
     }
     request.send();
     tamoRedy = true; 
 }
 
 function grainTwLoop(pntr = 0, frqScl = 1, wndwSz = 0.5, vrlps = 0.5, wndwRndRt = 0, time = 8000){
-    const tween = new TWEEN.Tween(params, false)
+    const tween = nebufferw TWEEN.Tween(params, false)
 	  .to({pointer: rand, freqScale: freq}, time) 
 	  .easing(TWEEN.Easing.Quadratic.InOut)
 	  .onUpdate(() => {
@@ -477,11 +492,26 @@ function grainTwLoop(pntr = 0, frqScl = 1, wndwSz = 0.5, vrlps = 0.5, wndwRndRt 
 	  .onComplete(() => {
 	      console.log(cosa.pointer); 
 	      // console.log(aCtx);
-	      cosa.windowRandRatio = 0.05; 
+	      cosa.windowRandRatio = 0.1; 
 	      rand = Math.random()
 	      freq = Math.floor(Math.random() * 2) + 1; 
 	      twCount++;
 	      console.log(twCount, rand); 
 	  })
 	  .start()
+}
+
+function onDocumentMouseDown( event ){
+    if(clicBool){
+	console.log("holafuera"); 
+	// const nrand = Math.floor(Math.random() * notes.length); 
+	// audioCtx.resume(); 
+	// console.log(nrand);
+	// grainTwLoop();
+	kickCount = 0;
+	snareCount = 0;
+	metalCount = 0;
+    }
+    // synth.triggerAttackRelease(notes[nrand], "16n");
+    clicBool = !clicBool; 
 }
