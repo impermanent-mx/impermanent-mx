@@ -6,8 +6,8 @@ import * as Tone from 'tone';
 import * as TWEEN from 'tween';
 
 const { Grain } = require('./Grain')
-const { map_range } = require('./maprange.js');
-const { GLoop } = require('./GrainTwLoop.js'); 
+const { map_range } = require('./maprange');
+const { GLoop } = require('./GLoop'); 
 
 let boolCosa = false;  
 let clicBool = false; 
@@ -20,7 +20,7 @@ const audioCtx = new AudioContext()
 
 const cosa = new Grain(audioCtx);
 
-const gloop = new GLoop();  
+const gloop = new GLoop({grain: cosa});  
 
 // console.log(cosa); 
 
@@ -273,7 +273,7 @@ function animate() {
 
     if(boolCosa){
 	gloop.update();
-	cosa.pointer = map_range(gloop.paramsInit.pointer, 0, 1, 0, cosa.buffer.duration);
+	// cosa.pointer = map_range(gloop.paramsInit.pointer, 0, 1, 0, cosa.buffer.duration);
 	cosa.freqScale = gloop.paramsInit.freqScale; 
     }
     
@@ -466,7 +466,7 @@ function decodeAndPlay(){
 	    cosa.start();
 
 	    Tone.Transport.start();
-	    // gloop.seqpointer = [0.1, 0.3, 0.5]; 
+	    gloop.seqpointer = [0.1, 0.3, 0.5]; 
 	    gloop.start();
 	    boolCosa = true;
 	    

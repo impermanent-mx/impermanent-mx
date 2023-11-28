@@ -2,30 +2,44 @@ const { map_range } = require('./maprange.js');
 import * as TWEEN from 'tween'; 
 
 class GLoop {
-    constructor(grain, type='gloop'){
+    constructor(grain, seqpointer = [0.5], seqfreqscale = [1], seqwindowsize = [0.1], seqoverlaps = [0.25], seqwindowrandratio = [0], seqtime = [8000], tweenloop = true, type='gloop'){
 
 	self = this;
-	self.grain = grain;
-
-	this.seqpointer= [0];
-	this.seqfreqScale= [1];
-	this.seqwindowSize= [0.5]; 
-	this.seqoverlaps= [0.2];
-	this.seqwindowRandRatio= [0]; 
-	this.seqtime = [8000];
-	this.count = 0; 
-
-	console.log(self.grain.audioCtx); 
+	// self.grain = grain;
+	this.grain = grain; 
+	this.seqpointer = seqpointer;
+	this.seqfreqScale = seqfreqscale;
+	this.seqwindowSize= seqwindowsize; 
+	this.seqoverlaps = seqoverlaps;
+	this.seqwindowRandRatio= seqwindowrandratio; 
+	this.seqtime = seqtime;
+	this.count = 0;
+	this.tweenloop = tweenloop; 
 	
+    }
+
+    set = function(seqpointer = [0.5], seqfreqscale = [1], seqwindowsize = [0.1], seqoverlaps = [0.25], seqwindowrandratio = [0], seqtime = [8000], tweenloop = true){
+	this.seqpointer = seqpointer;
+	this.seqfreqScale = seqfreqscale;
+	this.seqwindowSize= seqwindowsize; 
+	this.seqoverlaps = seqoverlaps;
+	this.seqwindowRandRatio= seqwindowrandratio; 
+	this.seqtime = seqtime;
+	this.count = 0;
+	this.tweenloop = tweenloop; 
     }
 
     update = function(){
 	TWEEN.update(); 
     }
+
+    loop = function(loop){
+	this.tweenloop = loop; 
+    }
     
     start = function(){
 
-	let paramsInit = {
+	this.paramsInit = {
 	    pointer: this.seqpointer[this.count % this.seqpointer.length],
 	    freqScale: this.seqfreqScale[this.count % this.seqfreqScale.length],
 	    windowSize: this.seqwindowSize[this.count % this.seqwindowSize.length],
@@ -44,14 +58,18 @@ class GLoop {
 	    time: this.seqtime[(this.count+1) % this.seqtime.length]
 	}
 	
-	const tween = new TWEEN.Tween(paramsInit, false)
-	      .to(paramsEnd, 8000) 
+	const tween = new TWEEN.Tween(this.paramsInit, false)
+	      .to(paramsEnd, 16000) 
 	      .easing(TWEEN.Easing.Quadratic.InOut)
 	      .onUpdate(() => {
+		  
+		  this.grain.grain.pointer = map_range(this.paramsInit.pointer, 0, 1, 0, this.grain.grain.buffer.duration); 
+
 		  //cosa.pointer = params.pointer; 
 		  // cosa.pointer = map_range(params.pointer, 0, 1, 0, cosa.buffer.duration)
 		  // cosa.freqScale = params.freqScale;
-		  //self.grain.pointer.bind(this) = map_range(paramsInit.pointer, 0, 1, 0, self.grain.buffer.duration.bind(this));  
+		  // console.log(paramsInit.pointer); 
+		  // sself.grain.pointer = map_range(paramsInit.pointer, 0, 1, 0, self.grain.buffer.duration);  
 	      })
 	      .onComplete(() => {
 		  //console.log(cosa.pointer); 
@@ -61,9 +79,11 @@ class GLoop {
 		  //freq = Math.floor(Math.random() * 2) + 1; 
 		  //twCount++;
 		  // console.log(twCount, rand);
-		 
-		  this.start(); 
-		  console.log(paramsEnd); 
+
+		  if(this.tweenloop){
+		      this.start();
+		  }
+		  // console.log(paramsEnd); 
 		  this.count++; 
 	      })
 	      .start()
@@ -71,27 +91,3 @@ class GLoop {
 }	
 
 module.exports = { GLoop } 
-
-/*
-function grainTwLoop(pntr = 0, frqScl = 1, wndwSz = 0.5, vrlps = 0.5, wndwRndRt = 0, time = 8000){
-    const tween = new TWEEN.Tween(params, false)
-	  .to({pointer: rand, freqScale: freq}, time) 
-	  .easing(TWEEN.Easing.Quadratic.InOut)
-	  .onUpdate(() => {
-	      //cosa.pointer = params.pointer; 
-	      cosa.pointer = map_range(params.pointer, 0, 1, 0, cosa.buffer.duration)
-	      // cosa.freqScale = params.freqScale; 
-	  })
-	  .onComplete(() => {
-	      console.log(cosa.pointer); 
-	      // console.log(aCtx);
-	      cosa.windowRandRatio = 0.1; 
-	      rand = Math.random()
-	      freq = Math.floor(Math.random() * 2) + 1; 
-	      twCount++;
-	      console.log(twCount, rand); 
-	  })
-	  .start()
-}
-
-*/
