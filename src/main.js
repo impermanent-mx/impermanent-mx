@@ -274,7 +274,7 @@ function animate() {
     if(boolCosa){
 	gloop.update();
 	// cosa.pointer = map_range(gloop.paramsInit.pointer, 0, 1, 0, cosa.buffer.duration);
-	cosa.freqScale = gloop.paramsInit.freqScale; 
+	// cosa.freqScale = gloop.paramsInit.freqScale; 
     }
     
     camera.updateMatrixWorld();
@@ -466,7 +466,13 @@ function decodeAndPlay(){
 	    cosa.start();
 
 	    Tone.Transport.start();
-	    gloop.seqpointer = [0.1, 0.3, 0.5]; 
+
+	    gloop.seqpointer = [0.1, 0.3, 0.5];
+	    gloop.seqfreqScale = [1, 0.5, 4, 2]; 
+	    gloop.seqwindowSize = [1, 0.01, 2];
+	    gloop.overlaps = [0.11, 2];
+	    gloop.windowRandRatio = [0.5, 0.1, 0.5, 1, 0.21]; 
+	    
 	    gloop.start();
 	    boolCosa = true;
 	    
